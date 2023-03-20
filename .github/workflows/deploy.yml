@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3.4.0
+        uses: actions/checkout@v2
 
       - name: Setup Java
         uses: actions/setup-java@v2
@@ -28,31 +28,21 @@ jobs:
         with:
           app-name: SuperheroKea
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: 'target/*.jar'
+          package: './target/*.jar'
 
   execute-sql:
     runs-on: ubuntu-latest
     needs: build-and-deploy
     if: success()
 
+    env:
+      MYSQL_SERVER_NAME: superherokea
+      MYSQL_DATABASE_NAME: SuperheroDB
+      MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      
     steps:
-      - name: Check if SQL files have been modified
-        id: check-sql-files
-        run: |
-          SQL_FILES=$(git diff --name-only HEAD HEAD~ | grep "\.sql$")
-          if [[ -z "$SQL_FILES" ]]; then
-            echo "No SQL files found."
-          else
-            echo "SQL files found: $SQL_FILES"
-            echo "::set-output name=sql-files::$SQL_FILES"
-          fi
-      - name: Execute SQL files against Azure Database for MySQL
-        if: steps.check-sql-files.outputs.sql-files != ''
-        env:
-          MYSQL_SERVER_NAME: superherokea
-          MYSQL_DATABASE_NAME: SuperheroDB
-          MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      - name: Execute SQL Files against Azure Database for MySQL
         run: |
           for file in ${GITHUB_WORKSPACE}/${{ steps.check-sql-files.outputs.sql-files }}; do
             mysql -h $MYSQL_SERVER_NAME -u $MYSQL_USERNAME -p$MYSQL_PASSWORD $MYSQL_DATABASE_NAME < $file
