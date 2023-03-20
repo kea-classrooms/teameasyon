@@ -1,0 +1,35 @@
+
+name: Execute SQL Workflow
+
+on:
+  push:
+    paths:
+      - 'src/sql/*.sql'
+
+jobs:
+  execute-sql:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get Changed SQL Files
+        id: get-changed-sql-files
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD HEAD~ | grep "^src/sql/.*\.sql$")
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "No SQL files found."
+            exit 1
+          else
+            echo "Changed SQL files found: $CHANGED_FILES"
+            echo "::set-output name=changed-sql-files::$CHANGED_FILES"
+          fi
+
+      - name: Execute SQL Files against Azure Database for MySQL
+        env:
+          MYSQL_SERVER_NAME: superherokea.database.windows.net
+          MYSQL_DATABASE_NAME: SuperheroDB
+          MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        run: |
+          for file in ${GITHUB_WORKSPACE}/${{ steps.get-changed-sql-files.outputs.changed-sql-files }}; do
+            mysql -h $MYSQL_SERVER_NAME -u $MYSQL_USERNAME -p$MYSQL_PASSWORD $MYSQL_DATABASE_NAME < $file
+          done
