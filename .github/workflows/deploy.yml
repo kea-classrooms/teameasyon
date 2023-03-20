@@ -29,25 +29,3 @@ jobs:
           app-name: SuperheroKea
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: 'target/*.jar'
-
-  execute-sql:
-    runs-on: ubuntu-latest
-    needs: build-and-deploy
-    if: success()
-
-    env:
-      MYSQL_SERVER_NAME: superherokea
-      MYSQL_DATABASE_NAME: SuperheroDB
-      MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
-      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-      
-    steps:
-      - name: Execute SQL Files against Azure Database for MySQL
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "SQL files found: $(find ${GITHUB_WORKSPACE}/src/main/resources/sql -type f -name '*.sql')"
-          for file in $(find ${GITHUB_WORKSPACE}/src/main/resources/sql -type f -name '*.sql'); do
-            echo "Executing file: ${file}"
-            mysql -h $MYSQL_SERVER_NAME -u $MYSQL_USERNAME -p$MYSQL_PASSWORD $MYSQL_DATABASE_NAME < $file
-          done
-
