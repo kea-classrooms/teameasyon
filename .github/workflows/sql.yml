@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'sql/*.sql'
+      - 'src/main/resources/sql/*.sql'
 
 jobs:
   execute-sql:
@@ -20,6 +20,6 @@ jobs:
     steps:
       - name: Execute SQL Files against Azure Database for MySQL
         run: |
-          for file in ${GITHUB_WORKSPACE}/src/sql/*.sql; do
+          for file in ${GITHUB_WORKSPACE}/src/main/resources/sql/*.sql; do
             mysql -h $MYSQL_SERVER_NAME -u $MYSQL_USERNAME -p$MYSQL_PASSWORD $MYSQL_DATABASE_NAME < $file
-          done 
+          done
