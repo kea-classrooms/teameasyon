@@ -44,6 +44,9 @@ jobs:
     steps:
       - name: Execute SQL Files against Azure Database for MySQL
         run: |
-          for file in ${GITHUB_WORKSPACE}/${{ steps.check-sql-files.outputs.sql-files }}; do
+          echo "Current directory: $(pwd)"
+          echo "SQL files found: $(find ${GITHUB_WORKSPACE} -type f -name '*.sql')"
+          for file in $(find ${GITHUB_WORKSPACE} -type f -name '*.sql'); do
+            echo "Executing file: ${file}"
             mysql -h $MYSQL_SERVER_NAME -u $MYSQL_USERNAME -p$MYSQL_PASSWORD $MYSQL_DATABASE_NAME < $file
           done
