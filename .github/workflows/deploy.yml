@@ -16,7 +16,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v2
         with:
-          java-version: '11'
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Build and Package Java App
         run: mvn package -DskipTests=true
