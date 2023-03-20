@@ -4,27 +4,47 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/main/resources/sql/*.sql' 
+
+
 
 jobs:
+
   build-and-deploy:
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v2
+
+        - name: Setup Java
+          uses: actions/setup-java@v2
+          with:
+            java-version: '11'
+
+        - name: Build and Package Java App
+          run: mvn package -DskipTests=true
+
+        - name: Deploy to Azure Web App
+          uses: azure/webapps-deploy@v2
+          with:
+            app-name: MTMF-DeployTask
+            publish-profile: ${{ secrets.PUBLISH_PROFILE_AZURE_DOMAIN }}
+            package: './target/*.jar'
+
+  execute-sql:
     runs-on: ubuntu-latest
 
+    env:
+      MYSQL_SERVER_NAME: superherokea
+      MYSQL_DATABASE_NAME: SuperheroDB
+      MYSQL_USERNAME: ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-
-      - name: Setup Java
-        uses: actions/setup-java@v2
-        with:
-          java-version: '11'
-
-      - name: Build and Package Java App
-        run: mvn package -DskipTests=true
-
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: SuperheroKEA
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: './target/*.jar'
-          done
+      - name: Execute SQL Files against Azure Database for MySQL
+        run: |
+          for file in ${GITHUB_WORKSPACE}/src/sql/*.sql; do
+            mysql -h $MYSQL_SERVER_NAME -u $MYSQL_USERNAME -p$MYSQL_PASSWORD $MYSQL_DATABASE_NAME < $file
+          done 
